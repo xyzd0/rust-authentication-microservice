@@ -1,0 +1,13 @@
+apiVersion: skaffold/v2beta2
+kind: Config
+metadata:
+  name: authentication
+build:
+  artifacts:
+  - image: localhost:5000/authentication
+    docker:
+      network: host
+deploy:
+  kubectl:
+    manifests:
+    - kubernetes/dev-deployment.yaml

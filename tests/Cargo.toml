@@ -1,0 +1,9 @@
+[package]
+name = "authentication_tests"
+version = "0.1.0"
+authors = ["Dan B <xyzd@users.noreply.github.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+authentication_server = { path = "../server" }
