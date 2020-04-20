@@ -1,10 +1,10 @@
 # rust-authentication-microservice
 
-An authentication microservice built in Rust. This is one of my first Rust projects so there will be things to improve, and I will go back and do these as and when I get time!
+An authentication microservice built in Rust. This is one of my first Rust projects so there will be things to improve, and I will go back and do when I get some spare time!
 
 Implements the ability to register new users, and authenticate existing users. No authoristion (e.g. RBAC) has been implemented, this would be done in a separate microservice.
 
-This is intended to be a demo of how Rust could be used to build a gRPC microservice. It is not ready for production use in its current state, particularly security-wise.
+This has been imported from another side-project, it is intended to be a demo of how Rust could be used to build a gRPC microservice. It is not ready for production use in its current state, particularly security-wise.
 
 ## Technologies Used
 
@@ -23,7 +23,7 @@ Rough list of things that could be improved (time permitted)!
 *  [ ] More system tests (`authentication_test` crate)
 *  [ ] Logging
 *  [ ] Refactoring to reduce the size of files such as `database.rs` and `repository.rs`. Look to separate these out into modules for different types of data to reduce coupling.
-    *  Refer to [1](https://github.com/clifinger/canduma) and [2](https://github.com/launchbadge/sqlx/tree/master/examples/realworld) for better structuring examples.
+    *  Refer to [[1]](https://github.com/clifinger/canduma) and [[2]](https://github.com/launchbadge/sqlx/tree/master/examples/realworld) for better structuring examples.
 
 ## Setup
 

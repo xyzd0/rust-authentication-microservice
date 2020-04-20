@@ -1,0 +1,24 @@
+[package]
+name = "authentication_server"
+version = "0.1.0"
+authors = ["Dan B <xyzd@users.noreply.github.com>"]
+edition = "2018"
+
+[dependencies]
+argonautica = "0.2.0"
+async-trait = "0.1.30"
+chrono = "0.4.11"
+dotenv = "0.15.0"
+jsonwebtoken = "7.1.0"
+num-traits = "0.2"
+num-derive = "0.3"
+prost = "0.6.1"
+rand = "0.7.3"
+thiserror = "1.0.15"
+tokio = { version = "0.2", features = ["full"] }
+tonic = { version = "0.2.0", features = ["transport"] }
+serde = {version = "1.0", features = ["derive"] }
+sqlx = { version = "0.3.4", default-features = false, features = ["chrono", "macros", "postgres", "runtime-tokio"] }
+
+[build-dependencies]
+tonic-build = "0.2"
