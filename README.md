@@ -22,7 +22,7 @@ Rough list of things that could be improved (time permitted)!
 *  [ ] More unit tests
 *  [ ] More system tests (`authentication_test` crate)
 *  [ ] Logging
-*  [x] Refactoring to reduce the size of files such as `database.rs` and `repository.rs`. Look to separate these out into modules for different types of data to reduce coupling.
+*  [x] ~Refactoring to reduce the size of files such as `database.rs` and `repository.rs`. Look to separate these out into modules for different types of data to reduce coupling.~
 
 ## Setup
 
