@@ -3,9 +3,9 @@ use crate::error::AuthError;
 
 use argonautica::{Hasher, Verifier};
 
-pub struct Argon2idHasher;
+pub struct Argon2id;
 
-impl Argon2idHasher {
+impl Argon2id {
     /// Hashes a password using the Argon2id hashing algorithm.AuthError
     ///
     /// # Parameters
@@ -14,7 +14,7 @@ impl Argon2idHasher {
     /// # Return Values
     /// Upon success, the hashed result will be returned, this is safe to store in a database and
     /// use for password verification at a later stage.
-    pub fn hash_password(password: &String) -> Result<String, AuthError> {
+    pub fn hash_password(password: &str) -> Result<String, AuthError> {
         let result = Hasher::default()
             .opt_out_of_secret_key(true)
             .with_password(password)
@@ -33,7 +33,7 @@ impl Argon2idHasher {
     ///
     /// # Return Values
     /// `true` if the password matched the hash, `false` otherwise.
-    pub fn verify_password(password: &String, hash: &String) -> Result<bool, AuthError> {
+    pub fn verify_password(password: &str, hash: &str) -> Result<bool, AuthError> {
         let result = Verifier::default()
             .with_password(password)
             .with_hash(hash)
@@ -54,11 +54,10 @@ mod test {
     fn test_hashing_and_verification_works_as_expected() {
         let password = "P@ssw0rd".to_string();
 
-        let hash =
-            Argon2idHasher::hash_password(&password).expect("hash_password returned an error");
+        let hash = Argon2id::hash_password(&password).expect("hash_password returned an error");
 
-        let is_match = Argon2idHasher::verify_password(&password, &hash)
-            .expect("verify_password returned an error");
+        let is_match =
+            Argon2id::verify_password(&password, &hash).expect("verify_password returned an error");
 
         assert!(is_match);
     }

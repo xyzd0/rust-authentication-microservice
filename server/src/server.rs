@@ -1,37 +1,32 @@
-pub mod auth {
+pub(crate) mod auth {
     tonic::include_proto!("com.service.auth");
 }
 
 use std::net::SocketAddr;
-use std::sync::Arc;
 
 use auth::auth_server::{Auth, AuthServer};
 use auth::{
-    authenticated_user_response, AuthenticatedUserResponse, AuthenticationRequest,
-    RegisterUserRequest, ValidateJwtRequest, ValidateJwtResponse,
+    authenticated_user_response::RefreshToken as ProtoRefreshToken, AuthenticatedUserResponse,
+    AuthenticationRequest, RegisterUserRequest,
 };
 
-use crate::repository::{AuthRepository, IdentityProvider};
-use crate::token;
+use crate::account::model::{AccountAuthenticate, AccountRegister, AccountRepository};
+use crate::database::Db;
+use crate::jwt;
+use crate::refresh_token::model::RefreshTokenRepository;
 
-use num_traits::FromPrimitive;
-
+use sqlx::PgPool;
 use tonic::{transport::Server, Request, Response, Status};
 
 /// The AuthService struct is used for handling incoming gRPC requests to this microservice.
-pub struct AuthService<T> {
-    repository: Arc<T>,
+pub struct AuthService {
+    pool: PgPool,
 }
 
-impl<T> AuthService<T>
-where
-    T: AuthRepository + Send + Sync + 'static,
-{
+impl AuthService {
     /// Creates a new AuthService instance.
-    pub fn new(repository: T) -> AuthService<T> {
-        AuthService {
-            repository: Arc::new(repository),
-        }
+    pub fn new(pool: PgPool) -> AuthService {
+        Self { pool }
     }
 
     pub async fn run_server(self, addr: SocketAddr) -> Result<(), Box<dyn std::error::Error>> {
@@ -45,46 +40,32 @@ where
 }
 
 #[tonic::async_trait]
-impl<T> Auth for AuthService<T>
-where
-    T: AuthRepository + Send + Sync + 'static,
-{
+impl Auth for AuthService {
     async fn register_user(
         &self,
         request: Request<RegisterUserRequest>,
     ) -> Result<Response<AuthenticatedUserResponse>, Status> {
         println!("Got register_user request from {:?}", request.remote_addr());
 
+        let mut conn = self.pool.conn().await?;
         let inner_request = request.into_inner();
-        let identity_provider = match IdentityProvider::from_i32(inner_request.identity_provider) {
-            Some(provider) => provider,
-            None => {
-                return Err(Status::invalid_argument(format!(
-                    "IdentityProvider {:?} is not a valid value",
-                    inner_request.identity_provider
-                )))
-            }
-        };
-
-        let account = self
-            .repository
-            .register_new_user(
-                &inner_request.email,
-                &inner_request.given_name,
-                &inner_request.family_name,
-                &identity_provider,
-                &inner_request.password,
-            )
+        let account = conn
+            .register_new_account(&AccountRegister {
+                given_name: inner_request.given_name,
+                email: inner_request.email,
+                password: Some(inner_request.password),
+            })
             .await?;
 
-        let refresh_token = self.repository.generate_refresh_token(&account.id).await?;
-        let jwt = token::JsonWebToken::create_token(&account.id, &account.email)?;
+        let jwt = jwt::generate::create_token(account.id, &account.email)?;
+        let refresh_token = conn.issue_refresh_token(account.id).await?;
 
         Ok(Response::new(AuthenticatedUserResponse {
             jwt,
-            refresh_token: Some(authenticated_user_response::RefreshToken {
+            refresh_token: Some(ProtoRefreshToken {
+                issued_at: refresh_token.issued_at.timestamp(),
+                expires: refresh_token.expires.timestamp(),
                 token: refresh_token.token,
-                expiry: refresh_token.expiry,
             }),
         }))
     }
@@ -98,45 +79,25 @@ where
             request.remote_addr()
         );
 
+        let mut conn = self.pool.conn().await?;
         let inner_request = request.into_inner();
-        let identity_provider = match IdentityProvider::from_i32(inner_request.identity_provider) {
-            Some(provider) => provider,
-            None => {
-                return Err(Status::invalid_argument(format!(
-                    "IdentityProvider {:?} is not a valid value",
-                    inner_request.identity_provider
-                )))
-            }
-        };
-
-        let account = self
-            .repository
-            .authenticate_user(
-                &inner_request.email,
-                &identity_provider,
-                &inner_request.password,
-            )
+        let account = conn
+            .authenticate_account(&AccountAuthenticate {
+                email: inner_request.email,
+                password: inner_request.password,
+            })
             .await?;
 
-        let refresh_token = self.repository.generate_refresh_token(&account.id).await?;
-        let jwt = token::JsonWebToken::create_token(&account.id, &account.email)?;
+        let jwt = jwt::generate::create_token(account.id, &account.email)?;
+        let refresh_token = conn.issue_refresh_token(account.id).await?;
 
         Ok(Response::new(AuthenticatedUserResponse {
             jwt,
-            refresh_token: Some(authenticated_user_response::RefreshToken {
+            refresh_token: Some(ProtoRefreshToken {
+                issued_at: refresh_token.issued_at.timestamp(),
+                expires: refresh_token.expires.timestamp(),
                 token: refresh_token.token,
-                expiry: refresh_token.expiry,
             }),
         }))
-    }
-
-    async fn validate_jwt(
-        &self,
-        request: Request<ValidateJwtRequest>,
-    ) -> Result<Response<ValidateJwtResponse>, Status> {
-        match token::JsonWebToken::validate_token(&request.into_inner().jwt) {
-            Ok(_) => Ok(Response::new(ValidateJwtResponse { is_valid: true })),
-            Err(e) => Err(e.into()),
-        }
     }
 }
