@@ -22,8 +22,7 @@ Rough list of things that could be improved (time permitted)!
 *  [ ] More unit tests
 *  [ ] More system tests (`authentication_test` crate)
 *  [ ] Logging
-*  [ ] Refactoring to reduce the size of files such as `database.rs` and `repository.rs`. Look to separate these out into modules for different types of data to reduce coupling.
-    *  Refer to [[1]](https://github.com/clifinger/canduma) and [[2]](https://github.com/launchbadge/sqlx/tree/master/examples/realworld) for better structuring examples.
+*  [x] Refactoring to reduce the size of files such as `database.rs` and `repository.rs`. Look to separate these out into modules for different types of data to reduce coupling.
 
 ## Setup
 
