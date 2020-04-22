@@ -1,9 +1,11 @@
+mod account;
 mod database;
 mod error;
 mod hashing;
-mod repository;
+mod identity;
+mod jwt;
+mod refresh_token;
 mod server;
-mod token;
 
 use dotenv::dotenv;
 use tokio;
@@ -14,16 +16,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let database_url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let server_addr = dotenv::var("SERVER_ADDR").expect("SERVER_URL must be set");
 
-    let auth_repo = database::AuthDbRepo::new(&database_url).await;
-    let auth_service = server::AuthService::new(auth_repo);
+    let pool = database::postgres::connect(&database_url).await?;
+    let auth_service = server::AuthService::new(pool);
 
-    auth_service
-        .run_server(
-            server_addr
-                .parse()
-                .expect("SEVER_ADDR is not a valid socket address"),
-        )
-        .await?;
+    auth_service.run_server(server_addr.parse()?).await?;
 
     Ok(())
 }

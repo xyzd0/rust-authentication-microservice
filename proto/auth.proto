@@ -3,43 +3,35 @@ syntax = "proto3";
 package com.service.auth;
 
 service Auth {
+  // Registers a new user with the service.
   rpc RegisterUser(RegisterUserRequest) returns (AuthenticatedUserResponse) {}
 
+  // Password authenticates an existing user with the service.
   rpc AuthenticateUser(AuthenticationRequest)
       returns (AuthenticatedUserResponse) {}
-
-  rpc ValidateJwt(ValidateJwtRequest) returns (ValidateJwtResponse) {}
 }
 
-enum IdentityProvider {
-  Password = 0;
-  Google = 1;
-}
+enum IdentitySource { Password = 0; }
 
 message RegisterUserRequest {
   string email = 1;
   string given_name = 2;
-  string family_name = 3;
-  IdentityProvider identity_provider = 4;
   string password = 5;
+  string token = 6;
 }
 
 message AuthenticationRequest {
   string email = 1;
-  IdentityProvider identity_provider = 2;
   string password = 3;
 }
 
 message AuthenticatedUserResponse {
   message RefreshToken {
-    string token = 1;
-    int64 expiry = 2;
+    int64 issued_at = 1;
+    int64 expires = 2;
+    string token = 3;
   }
 
   string jwt = 1;
   RefreshToken refresh_token = 2;
 }
-
-message ValidateJwtRequest { string jwt = 1; }
-
-message ValidateJwtResponse { bool is_valid = 1; }
